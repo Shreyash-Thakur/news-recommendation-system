@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Recommendation System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .controls select, .controls input {
+            padding: 10px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        
+        .controls button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .controls button:hover {
+            background: #5568d3;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .article-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .article-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .article-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .article-card.selected {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .article-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+        
+        .article-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .category-badge {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        
+        .recommendation-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .recommendation-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .similarity-score {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .selected-article {
+            background: #f8f9ff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .selected-article h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📰 News Recommendation System</h1>
+            <p>Content-Based Filtering with TF-IDF & Cosine Similarity</p>
+        </header>
+        
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="number" id="totalArticles">-</div>
+                <div class="label">Total Articles</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalSources">-</div>
+                <div class="label">News Sources</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="totalCategories">-</div>
+                <div class="label">Categories</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <select id="categoryFilter">
+                <option value="">All Categories</option>
+                <option value="business">Business</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="general">General</option>
+                <option value="health">Health</option>
+                <option value="science">Science</option>
+                <option value="sports">Sports</option>
+                <option value="technology">Technology</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="Search articles...">
+            <button onclick="loadArticles()">Search</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="section">
+                <h2>📋 Articles</h2>
+                <div class="article-list" id="articleList">
+                    <div class="loading">Loading articles...</div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🎯 Recommendations</h2>
+                <div id="recommendationArea">
+                    <div class="empty-state">
+                        <div>👈</div>
+                        <p>Select an article to see recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        // Load stats on page load
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+                
+                document.getElementById('totalArticles').textContent = data.total_articles;
+                document.getElementById('totalSources').textContent = data.sources;
+                document.getElementById('totalCategories').textContent = Object.keys(data.categories).length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Load articles
+        async function loadArticles() {
+            const category = document.getElementById('categoryFilter').value;
+            const search = document.getElementById('searchInput').value;
+            const articleList = document.getElementById('articleList');
+            
+            articleList.innerHTML = '<div class="loading">Loading articles...</div>';
+            
+            try {
+                let url = `${API_BASE}/articles?page=1&page_size=20`;
+                if (category) url += `&category=${category}`;
+                if (search) url += `&search=${search}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.articles.length === 0) {
+                    articleList.innerHTML = '<div class="empty-state"><p>No articles found</p></div>';
+                    return;
+                }
+                
+                articleList.innerHTML = data.articles.map(article => `
+                    <div class="article-card" onclick="selectArticle(${article.id}, this)">
+                        <div class="article-title">${article.title}</div>
+                        <div class="article-meta">
+                            <span class="category-badge">${article.category}</span>
+                            <span>${article.source}</span>
+                            <span>${new Date(article.published_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                articleList.innerHTML = '<div class="empty-state"><p>Error loading articles</p></div>';
+                console.error('Error:', error);
+            }
+        }
+        
+        // Select article and get recommendations
+        async function selectArticle(articleId, element) {
+            // Highlight selected article
+            document.querySelectorAll('.article-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            
+            const recommendationArea = document.getElementById('recommendationArea');
+            recommendationArea.innerHTML = '<div class="loading">Loading recommendations...</div>';
+            
+            try {
+                // Get article details
+                const articleResponse = await fetch(`${API_BASE}/articles/${articleId}`);
+                const article = await articleResponse.json();
+                
+                // Get recommendations
+                const recResponse = await fetch(`${API_BASE}/recommend/${articleId}?top_n=5`);
+                const recData = await recResponse.json();
+                
+                let html = `
+                    <div class="selected-article">
+                        <h3>Selected Article</h3>
+                        <div class="article-title">${article.title}</div>
+                        <div class="article-meta">
+                            <span class="category-badge">${article.category}</span>
+                            <span>${article.source}</span>
+                        </div>
+                    </div>
+                `;
+                
+                if (recData.recommendations.length === 0) {
+                    html += `
+                        <div class="empty-state">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🔍</div>
+                            <p><strong>No similar articles found yet</strong></p>
+                            <p style="font-size: 0.9rem; color: #999; margin-top: 10px;">
+                                This can happen with limited data.<br>
+                                Try selecting a different article!
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    html += recData.recommendations.map((rec, index) => `
+                        <div class="recommendation-card">
+                            <div class="similarity-score">#${index + 1} • ${(rec.similarity * 100).toFixed(1)}% match</div>
+                            <div class="article-title">${rec.title}</div>
+                            <div class="article-meta">
+                                <span class="category-badge">${rec.category}</span>
+                                <span>${rec.source}</span>
+                                <span>${new Date(rec.published_at).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                recommendationArea.innerHTML = html;
+            } catch (error) {
+                console.error('Recommendation error:', error);
+                recommendationArea.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
+                        <p><strong>Unable to load recommendations</strong></p>
+                        <p style="font-size: 0.9rem; color: #999; margin-top: 10px;">
+                            ${error.message || 'Please try again or select another article'}
+                        </p>
+                    </div>
+                `;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Initialize
+        loadStats();
+        loadArticles();
+    </script>
+</body>
+</html>

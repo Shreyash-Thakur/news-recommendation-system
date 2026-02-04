@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: news-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: newsdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: news-app
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+    command: tail -f /dev/null
+
+  api:
+    build: .
+    container_name: news-api
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+    command: python -m uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  pgdata:
